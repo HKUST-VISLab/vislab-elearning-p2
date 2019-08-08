@@ -268,7 +268,11 @@ class Service {
             return interestAreaList
         }
         for (let q = 0; q < range.length; q++) {
-            let k = range[q] // k: The order number in data
+            if (lowscale) {
+                var k = range[q] // k: The order number in data
+            } else {
+                var k = 0;
+            }
             let eventType = data[k]['eventtypes'] // eventType: The event type order sequence
             let pointsOrder = data[k]['states'] // pointsOrder: The order sequence of interest points
             let sequenceLength = pointsOrder.length
@@ -430,10 +434,13 @@ class Service {
         function _scoreinfoRepos(data) {
             let scoreRep = []
             for (let j = 0; j < data.length; j++) {
-                let tmp = {}
-                tmp['userid'] = data[j].userid
-                tmp['score'] = Math.random() * 100
-                scoreRep.push(tmp)
+                if (data[j]['score'].length > 0) {
+                    let tmp = {}
+                    tmp['userid'] = data[j].userid
+                        // tmp['score'] = Math.random() * 100
+                    tmp['score'] = parseInt(data[j]['score'][data[j]['score'].length - 1])
+                    scoreRep.push(tmp)
+                }
             }
             return scoreRep
         }
@@ -497,6 +504,7 @@ class Service {
                     scoreCal[3][1]++
                 }
             };
+            console.log(scoreCal)
             return scoreCal
         };
 
@@ -642,8 +650,8 @@ class Service {
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .attr('x', function(d) { return sdXScale(d[0]) })
             .attr('width', sdXScale.bandwidth())
-            .attr('y', function(d) { return sdYScale(d[1]) })
-            .attr('height', function(d) { return daHeight - margin.bottom - margin.top - sdYScale(d[1]) })
+            .attr('y', function(d) { return sdYScale(d[1]) - margin.top })
+            .attr('height', function(d) { return daHeight - margin.bottom - sdYScale(d[1]) })
             .attr('fill', 'rgba(188,195,212)')
     }
 }

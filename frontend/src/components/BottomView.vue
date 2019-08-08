@@ -1,9 +1,9 @@
 <template>
-  <div style="display: flex;" v-show="showbottomview">
-      
-      <svg :id="svgid">
+  <div style="overflow-y:hidden;" v-show="showbottomview">
+      <div class = "content" id = "bottomview_div" style = "height: 100% ; width: 960px;"></div>
+      <!-- <svg id="bottomview_svg"> -->
         <!-- <BottomView v-for="item in clusterList" v-bind:key="item" /> -->
-      </svg>
+      <!-- </svg> -->
   </div>
 </template>
 
@@ -23,10 +23,10 @@ export default {
       svgid:"",
       clusterList:[1, 2, 3],
       showbottomview: false,
-      low: 100,
-      high: 300,  
+      low: 10,
+      high: 500,  
       config: {
-        disableZoom: false,
+        disableZoom: true,
         scalesize: 4.2,
         problemid: "20x746187641c59c168",
         userid: '0474000000008137',
@@ -60,19 +60,67 @@ export default {
   },
   methods: {
     renderBottoms (data) {
-      let localsvg = d3.select('#'+ this.config.svgid_set.pop())
-        .attr('class', 'bottom_SVG')
-      // Keep score's type as Number and keep the latest score
+      let orderNum = 0;
+      let textSize = 18;
+      let mapGap = 320;
+      let textGap = 205;
+      let validCount = 0;
+
       for (let i = 0; i < data.length; i++) {
-          if (data[i]['score'].length > 0) {
-              data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
-          }
+        if (data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1] == '100') {
+          validCount ++;
+        }
       }
-      let range = this.paceFilter(this.low, this.high, data)
-      if (this.config.svgid_set.length == 0){
-        Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, data, DataService.content.validSetCenter, this.config, false)
-      }else{
-        Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, data, DataService.content.validSetCenter, this.config, false)
+
+      d3.select('#bottomview_div').selectAll('*').remove()
+      let mainSVG = d3.select('#bottomview_div')
+            .append('svg')
+            .attr("id", "bottomview_svg")
+            .attr('width', validCount * mapGap)
+            .attr('height', 150);
+      for (let i = 0; i < data.length; i++) {
+        if (data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1] == '100') {
+          let currentScore = parseInt(data[i]['score'][data[i]['score'].length - 1])
+          // Keep score's type as Number and keep the latest score
+          data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
+          let currentUserid = data[i]['userid'].slice(11);
+            
+          let localsvg = mainSVG.append('g')
+            .attr("id", "user" + i)
+            .attr("transform", "translate(" + mapGap * orderNum + ", 0)")
+
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * orderNum)
+            .attr("y", 60)
+            .text("User ID:" + currentUserid)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * orderNum)
+            .attr("y", 80)
+            .text("Score:" + currentScore)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          d3.select('#bottomview_svg')
+            .append("line")
+            .attr("x1", mapGap * (orderNum + 1))
+            .attr("y2", 0)
+            .attr("x2", mapGap * (orderNum + 1))
+            .attr("y2", 140)
+            .attr("stroke", "grey")
+            .attr("stroke-width", "2px")
+            .attr('opacity', 0.5);
+
+          let range = this.paceFilter(this.low, this.high, data)
+          if (this.config.svgid_set.length == 0){
+            Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
+          }else{
+            Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
+          }
+          orderNum = orderNum + 1
+        }
       }
     },
     paceFilter (slow, fast, data) {

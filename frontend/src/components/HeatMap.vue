@@ -21,6 +21,7 @@ export default {
         heatCoef: this.heatCoef,
         freqThresh: this.freqThresh,
         heatmap: null,
+        imagePath: 'image/20x746187641c59c168.jpg',
       }
     }
   },
@@ -64,6 +65,7 @@ export default {
   mounted () {
     eventBus.$on("view_change", chosenview => {
       this.config.problemid = this.problemid
+      this.config.imagePath = 'image/' + this.config.problemid + '.jpg'
       if(chosenview == 'heatmapview') {
         this.showheatmap = true
         Object.getPrototypeOf(DataService).getSequence.call(this, 'drawHeatmap', this.config)
@@ -81,6 +83,15 @@ export default {
       this.config.heatmap._max = this.config.freqThresh
       this.config.heatmap.radius(this.config.heatRadius, this.config.heatCoef)
       this.config.heatmap.draw()
+      
+      // Put Problem Image as Background
+      var cvs = document.getElementById("id_heatmap");
+      var imgObj = new Image();
+      imgObj.src = require('../assets/' + this.config.imagePath);
+      imgObj.onload = function(){
+              var ctx = cvs.getContext('2d');
+              ctx.drawImage(this, 0, 0, 960, 600);
+      }
     },
     _transferdata (dt) {
       let dtst = []
