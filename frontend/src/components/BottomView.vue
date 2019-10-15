@@ -61,6 +61,10 @@ export default {
   methods: {
     renderBottoms (data) {
       let orderNum = 0;
+      // test variable
+      let secondOrderNum = 0;
+      let slicePartition = 5;
+      // -------------
       let textSize = 18;
       let mapGap = 320;
       let textGap = 205;
@@ -77,12 +81,16 @@ export default {
             .append('svg')
             .attr("id", "bottomview_svg")
             .attr('width', validCount * mapGap)
-            .attr('height', 150);
+            .attr('height', 150 + 140);
+      console.log(data)
       for (let i = 0; i < data.length; i++) {
         if (data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1] == '100') {
           let currentScore = parseInt(data[i]['score'][data[i]['score'].length - 1])
           // Keep score's type as Number and keep the latest score
           data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
+          // test for trace slicing
+          let currentActNum = parseInt(data[i]['states'].length/3)
+          // ----------------------
           let currentUserid = data[i]['userid'].slice(11);
             
           let localsvg = mainSVG.append('g')
@@ -106,20 +114,91 @@ export default {
           d3.select('#bottomview_svg')
             .append("line")
             .attr("x1", mapGap * (orderNum + 1))
-            .attr("y2", 0)
+            .attr("y1", 0)
             .attr("x2", mapGap * (orderNum + 1))
             .attr("y2", 140)
             .attr("stroke", "grey")
             .attr("stroke-width", "2px")
             .attr('opacity', 0.5);
+          // test for trace slicing
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * orderNum)
+            .attr("y", 100)
+            .text("ActNum:" + currentActNum)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          // ----------------------
 
           let range = this.paceFilter(this.low, this.high, data)
+
+          // For test on change the length of trace
+          data[i]['states'].splice(data[i]['states'].length/slicePartition, data[i]['states'].length)
+          data[i]['eventtypes'].splice(data[i]['eventtypes'].length/slicePartition, data[i]['eventtypes'].length)
+          //----------------------------------------
           if (this.config.svgid_set.length == 0){
             Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
           }else{
             Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
           }
           orderNum = orderNum + 1
+        }
+
+        // For test on change the length of trace---------------------------------------------------------
+        if (parseInt(data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1]) < 100) {
+          let currentScore = parseInt(data[i]['score'][data[i]['score'].length - 1])
+          // Keep score's type as Number and keep the latest score
+          data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
+          let currentUserid = data[i]['userid'].slice(11);
+          let currentActNum = parseInt(data[i]['states'].length/3);
+            
+          let localsvg = mainSVG.append('g')
+            .attr("id", "user" + i)
+            .attr("transform", "translate(" + mapGap * secondOrderNum + ", 140)")
+
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * secondOrderNum)
+            .attr("y", 60 + 140)
+            .text("User ID:" + currentUserid)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * secondOrderNum)
+            .attr("y", 80 + 140)
+            .text("Score:" + currentScore)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          d3.select('#bottomview_svg').append('text')
+            .attr("x", textGap + mapGap * secondOrderNum)
+            .attr("y", 100 + 140)
+            .text("ActNum:" + currentActNum)
+            .attr("class", "textselected")
+            .style("text-anchor", "start")
+            .style("font-size", textSize)
+          d3.select('#bottomview_svg')
+            .append("line")
+            .attr("x1", mapGap * (secondOrderNum + 1))
+            .attr("y1", 0 + 140)
+            .attr("x2", mapGap * (secondOrderNum + 1))
+            .attr("y2", 140 + 140)
+            .attr("stroke", "grey")
+            .attr("stroke-width", "2px")
+            .attr('opacity', 0.5);
+
+          let range = this.paceFilter(this.low, this.high, data)
+
+          data[i]['states'].splice(data[i]['states'].length/slicePartition, data[i]['states'].length)
+          data[i]['eventtypes'].splice(data[i]['eventtypes'].length/slicePartition, data[i]['eventtypes'].length)
+ 
+          if (this.config.svgid_set.length == 0){
+            Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
+          }else{
+            Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
+          }
+          secondOrderNum = secondOrderNum + 1
+        //-------------------------------------------------------------------------------------------------
         }
       }
     },

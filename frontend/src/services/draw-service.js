@@ -36,7 +36,8 @@ class Service {
             .attr('y', 0)
     }
     drawTraceOverview(svgNode, range, data, interestingPoints, dataconfig, lowscale) {
-        // mapList: Store everyone's computed transition information
+        console.log(interestingPoints)
+            // mapList: Store everyone's computed transition information
         let scalesize = dataconfig.scalesize
         let disableZoom = dataconfig.disableZoom
         if (lowscale) {
@@ -48,6 +49,10 @@ class Service {
         let localHeight = 600 / scalesize
         let minR = 10 / scalesize
         let maxR = 30 / scalesize
+        if (lowscale) {
+            maxR = dataconfig.maxRadius
+            minR = dataconfig.minRadius
+        }
         let curRate = 30 / scalesize
         let maxBandwidth = maxR * 2
         let outWidth = 4 / scalesize
@@ -156,8 +161,8 @@ class Service {
             let xScale = d3.scaleLinear().domain([0, window.outerWidth]).range([0, window.outerWidth])
             let yScale = d3.scaleLinear().domain([0, window.outerHeight]).range([0, window.outerHeight])
             let newxScale = d3.event.transform.rescaleX(xScale)
-            let newyScale = d3.event.transform.rescaleY(yScale)
-                // Update circle
+            let newyScale = d3.event.transform.rescaleY(yScale);
+            // Update circle
             localg.selectAll('.transition_line').attr('transform', d3.event.transform)
             localg.selectAll('.arc').remove()
             localg.selectAll('.arc1').remove()
@@ -230,8 +235,8 @@ class Service {
                 interestArea['x'] = xScale(Number(interestingPoints[i][0] * cellRadius))
                 interestArea['y'] = yScale(Number(interestingPoints[i][1] * cellRadius))
                 interestArea['z'] = 0
-                interestArea['eventType'] = Array(timeSlice).fill(0)
-                interestArea['timeRatio'] = Array(eventTypeNum).fill(0)
+                interestArea['eventType'] = Array(eventTypeNum).fill(0)
+                interestArea['timeRatio'] = Array(timeSlice).fill(0)
                 interestAreaList.push(interestArea)
             }
             for (let i = 0; i < sequenceLength; i++) {
@@ -297,8 +302,8 @@ class Service {
             interestArea['x'] = xScale(interestingPoints[i][0])
             interestArea['y'] = yScale(interestingPoints[i][1])
             interestArea['z'] = 0
-            interestArea['eventType'] = Array(timeSlice).fill(0)
-            interestArea['timeRatio'] = Array(eventTypeNum).fill(0)
+            interestArea['eventType'] = Array(eventTypeNum).fill(0)
+            interestArea['timeRatio'] = Array(timeSlice).fill(0)
             interestAreaOverview.push(interestArea)
         }
         // Get the most time period of each link
@@ -326,13 +331,13 @@ class Service {
             }
         }
         // maxWeight: get the max link weight
-        let maxWeight = Math.max(...mapOverview.map((d, i) => { return Math.max(...d.map((wt) => wt.weight)) }))
-            // Limit the max size of interest points
-        let rScale = d3.scaleSqrt().domain(d3.extent(interestAreaOverview, d => d.z)).range([minR, maxR])
-            // Limit the max width of transition line
-        let swScale = d3.scaleLinear().domain([0, maxWeight]).range([0, maxBandwidth])
-            // Add zoom function in the view
-            // Append zoom area
+        let maxWeight = Math.max(...mapOverview.map((d, i) => { return Math.max(...d.map((wt) => wt.weight)) }));
+        // Limit the max size of interest points
+        let rScale = d3.scaleSqrt().domain(d3.extent(interestAreaOverview, d => d.z)).range([minR, maxR]);
+        // Limit the max width of transition line
+        let swScale = d3.scaleLinear().domain([0, maxWeight]).range([0, maxBandwidth]);
+        // Add zoom function in the view
+        // Append zoom area
         if (!disableZoom) {
             let zoom = d3.zoom().on('zoom', _zoomed)
             localg.append('rect')
@@ -406,6 +411,7 @@ class Service {
     }
 
     drawchart(data, localsvg, config) {
+        // console.log('draw analytics chart')
         let daHeight = config.height;
         let daWidth = config.width;
         localsvg.selectAll('*').remove();
@@ -504,7 +510,7 @@ class Service {
                     scoreCal[3][1]++
                 }
             };
-            console.log(scoreCal)
+            // console.log(scoreCal)
             return scoreCal
         };
 
@@ -566,7 +572,7 @@ class Service {
         }))
         adYScale.domain([0, d3.max(actionCal, function(d) {
             return d[1]
-        })])
+        }) + 3])
         localsvg.append('g')
             .attr('transform', 'translate(' + margin.left + ',' + (daHeight / 2 - margin.bottom) + ')')
             .call(d3.axisBottom(adXScale))
@@ -578,7 +584,7 @@ class Service {
         }))
         sdYScale.domain([0, d3.max(scoreCal, function(d) {
             return d[1]
-        })])
+        }) + 3])
         localsvg.append('g')
             .attr('transform', 'translate(' + margin.left + ',' + (daHeight - margin.bottom) + ')')
             .call(d3.axisBottom(sdXScale))

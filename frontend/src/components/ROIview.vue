@@ -121,6 +121,7 @@ export default {
         .attr('class', 'd3SVG')
         .attr('width', this.width)
         .attr('height', this.height)
+
       let gaussData = this.gaussFilter(this.config.cellCoef, data)
       let rectarr = this.rawToBox(this.config.cellRadius, gaussData)
       let filterSet = this.detectObject(this.selectValid(this.config.upperThresh, rectarr))
@@ -129,6 +130,7 @@ export default {
       if (this.mode === 'true') {
         let baseFilterSet = {}
         baseFilterSet = this.selectValid(this.config.lowerThresh, rectarr)
+        console.log(baseFilterSet)
         for (let key in baseFilterSet) {
           baseFilterSet[key] = this.minCenterDistance(key)
         }
@@ -181,6 +183,7 @@ export default {
           }
         }
       }
+
       for (let key in filterSet) {
         if (dealed[key] === undefined) {
           let currentSector = {}

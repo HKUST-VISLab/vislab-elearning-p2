@@ -5,7 +5,7 @@
       <div class="overviewcontainer">
         <ROIview :cellRadius="cellRadius" :cellCoef="cellCoef" :upperThresh="upperThresh" :lowerThresh="lowerThresh" :problemid="problemid"/>
         <HeatMapview :heatRadius="heatRadius" :heatCoef="heatCoef" :freqThresh="freqThresh" :problemid="problemid"/>
-        <Transitionview :cellRadius="cellRadius" :problemid="problemid"/>
+        <Transitionview :cellRadius="cellRadius" :problemid="problemid" :maxRadius="maxRadius" :minRadius="minRadius"/>
       </div>
       <div class="transitiontitle">Transition Map</div>
       <div class="transitioncontainer">
@@ -38,10 +38,10 @@
               <span><input @change="valueChange" v-model.number="heatCoef" class="input-range" type="range" min="0" max="40">Smoothing Coefficient</span>
               <span><input @change="valueChange" v-model.number="freqThresh" class="input-range" type="range" min="1" max="100">Frequency Threshold</span>
           </div>
-          <!-- <div v-if="viewvalue==='transitionview'" class="panelcontent">
-              <span><input @change="valueChange" v-model.number="heatRadius" class="input-range" type="range" value="1" min="1" max="20">Heatmap Radius</span>
-              <span><input @change="valueChange" v-model.number="heatCoef" class="input-range" type="range" value="6" min="1" max="40">Heatmap Blur</span>
-          </div> -->
+          <div v-if="viewvalue==='transitionview'" class="panelcontent">
+              <span><input @change="valueChange" v-model.number="maxRadius" class="input-range" type="range" min="20" max="50">Max Radius (Pie)</span>
+              <span><input @change="valueChange" v-model.number="minRadius" class="input-range" type="range" min="10" max="20">Min Radius (Pie)</span>
+          </div>
         </div>
       </div>
       <div id = "id_statistic" style="margin-left:10px;margin-top:5px">
@@ -81,7 +81,7 @@ export default {
   },
   data () {
     return {
-      problemlist: ["2841x00378c88165f5e16","3390x89c89efbd95796b2","3193xfa9eefc38d8ea289","3192x96c2dcdc94eac57b","20x746187641c59c168","2350x67dbe3cf12d34feb","3194xb3570a05e04eaa46","2344x8773a6898a1f33cf","2352x2c01d405736101be","2343xccc49157c296ccd8","392xbf8da0c8c5262b4b","174x4dc558a71c4020b7","583x8935c42f1e095c80","2288x7f5a6f65dd75801d","3331xde2f4ef708d49596","17x20d0226967291fe3","3260x04b8302ee2f3e356","3214xd1ecb03eaf4ed53a","2933x1aec2bd4ca7bf1ca","545x81d6ae36725e90e1","2957x081413147870fe2a","3560x3937fea475445c30","21x92b56cf7078123e4","680xf0cb97b391c7b6b8","3333xbe2b90abda67f262","3332xfbbe2cb982db7c99","611xca233ae480904689"],
+      problemlist: ["2841x00378c88165f5e16","3390x89c89efbd95796b2","3193xfa9eefc38d8ea289","3192x96c2dcdc94eac57b", "3345x563ac713a3b6df9f","93x86d2ce608bf1ee27", "20x746187641c59c168","21x92b56cf7078123e4", "22x9b87945d0701947f","2350x67dbe3cf12d34feb","3194xb3570a05e04eaa46","2344x8773a6898a1f33cf","2352x2c01d405736101be","2343xccc49157c296ccd8","392xbf8da0c8c5262b4b","174x4dc558a71c4020b7","583x8935c42f1e095c80","2288x7f5a6f65dd75801d","3331xde2f4ef708d49596","17x20d0226967291fe3","3260x04b8302ee2f3e356","3214xd1ecb03eaf4ed53a","2933x1aec2bd4ca7bf1ca","545x81d6ae36725e90e1","2957x081413147870fe2a","3560x3937fea475445c30","680xf0cb97b391c7b6b8","3333xbe2b90abda67f262","3332xfbbe2cb982db7c99","611xca233ae480904689"],
       viewvalue: "roiview",
       cellRadius: 4,
       cellCoef: 13,
@@ -90,6 +90,8 @@ export default {
       heatRadius: 3,
       heatCoef: 4,
       freqThresh: 11,
+      maxRadius: 30,
+      minRadius: 10,
       mode: "false",
       problemid: "20x746187641c59c168"
     }
@@ -307,7 +309,8 @@ export default {
 
 .transitioncontainer {
     border: 4px solid rgba(186, 146, 146) !important;
-    height: 140px;
+    /* height: 140px; */
+    height: 280px;
 }
 
 .statistictitle {

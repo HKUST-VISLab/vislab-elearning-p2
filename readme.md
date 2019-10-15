@@ -16,5 +16,5 @@ Users could choose different questions on the right bar of the system. *Overview
 
 ### Three Views
 <div style="text-align: center">
-<img src = "readme_material/ROIview.png" width = '170'/><img src = "readme_material/Heatmapview.png" width = '170'/><img src = "readme_material/Transitionview.png" width = '170'/>
+<img src = "readme_material/ROIview.png" width = '400'/><img src = "readme_material/Heatmapview.png" width = '400'/><img src = "readme_material/Transitionview.png" width = '400'/>
 </div>

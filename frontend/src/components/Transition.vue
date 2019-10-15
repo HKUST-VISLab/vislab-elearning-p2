@@ -25,9 +25,33 @@ export default {
         userid: '0474000000008137',
         svgid_set: [],
         cellRadius: 4,
+        maxRadius: this.maxRadius,
+        minRadius: this.minRadius,
         imagePath: 'image/20x746187641c59c168.jpg'
       },
     }
+  },
+  props: {
+    maxRadius: {
+      type: Number,
+      required: true
+    },
+    minRadius: {
+      type: Number,
+      required: true
+    }
+  },
+  watch: {
+    maxRadius(newValue, oldValue) {
+        this.maxRadius = newValue
+        this.config.maxRadius = this.maxRadius
+        Object.getPrototypeOf(DataService).getUserSequenceByProblem.call(this, "renderTransition", this.config)
+    },
+    minRadius(newValue, oldValue) {
+        this.minRadius = newValue
+        this.config.minRadius = this.minRadius
+        Object.getPrototypeOf(DataService).getUserSequenceByProblem.call(this, "renderTransition", this.config)
+    },
   },
   components: {
 
@@ -51,7 +75,7 @@ export default {
   },
   methods: {
     renderTransition (data) {
-      let localsvg = d3.select('#'+ this.config.svgid_set.pop())
+      let localsvg = d3.select('#'+ this.config.svgid_set[this.config.svgid_set.length-1])
         .attr('class', 'd3SVG')
 
       // Keep score's type as Number and keep the latest score

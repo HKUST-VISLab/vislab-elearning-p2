@@ -59,13 +59,14 @@ def _getUserSequenceByProblem(problemid):
         return str({"data":[]})
     with open("./cache/" + problemid + "/" + "tmp", "r") as f:
         result = json.load(f)
-    filterscale = result["scale"]
+    filterscale = result["config"]["cellRadius"]
     baseFilterSet = result["data"]
-    result = databaseapi.userSequenceByProblem(problemid)
+    result2 = databaseapi.userSequenceByProblem(problemid)
     data = []
-    for userdata in result:
+    for userdata in result2:
         states = []
         eventTypes = []
+        eventTimes= []
         mint = userdata["data"][0]['timestamp']
         maxt = userdata["data"][0]['timestamp']
         for item in userdata["data"]:
@@ -79,8 +80,23 @@ def _getUserSequenceByProblem(problemid):
             if index in baseFilterSet:
                 states.append(baseFilterSet[index])
                 eventTypes.append(item['type'])
+                eventTimes.append(item['timestamp'])
+            # Add by Min ============================
+            elif item['type'] != 'mousemove':
+                minDistance = 10000
+                minState = 0
+                for point in baseFilterSet:
+                    baseX = int(point.split('_')[0])
+                    baseY = int(point.split('_')[1])
+                    if (x - baseX)**2 + (y - baseY)**2 < minDistance:
+                        minDistance = (x - baseX)**2 + (y - baseY)**2
+                        minState = baseFilterSet[point]
+                states.append(minState)
+                eventTypes.append(item['type'])
+                eventTimes.append(item['timestamp'])
+            # =======================================
         if len(states) > 10:
-            data.append({"states":states,"eventtypes":eventTypes,"userid":userdata["_id"], "score":readdata.getScoreByID(userdata["_id"],problemid),"maxt":maxt, "mint":mint})
+            data.append({"timestamp":eventTimes, "states":states,"eventtypes":eventTypes,"userid":userdata["_id"], "score":readdata.getScoreByID(userdata["_id"],problemid),"maxt":maxt, "mint":mint})
     with open("./cache/" + problemid + "/userproblemsequence", "w+") as f:
         f.write(str({"data":data}))
     return str({"data":data})
