@@ -36,8 +36,8 @@ class Service {
             .attr('y', 0)
     }
     drawTraceOverview(svgNode, range, data, interestingPoints, dataconfig, lowscale) {
-        console.log(interestingPoints)
-            // mapList: Store everyone's computed transition information
+        // console.log(interestingPoints)
+        // mapList: Store everyone's computed transition information
         let scalesize = dataconfig.scalesize
         let disableZoom = dataconfig.disableZoom
         if (lowscale) {
@@ -659,6 +659,526 @@ class Service {
             .attr('y', function(d) { return sdYScale(d[1]) - margin.top })
             .attr('height', function(d) { return daHeight - margin.bottom - sdYScale(d[1]) })
             .attr('fill', 'rgba(188,195,212)')
+    }
+
+    drawClusterView(fullSVG, probData, clusterResult, validCenter, sliceRatio, dataconfig) {
+        console.log(validCenter)
+        let lowscale = false
+        for (let userIndex = 0; userIndex < probData.length; userIndex++) {
+            for (let eventIndex = 0; eventIndex < probData[userIndex]['eventtypes'].length; eventIndex++) {
+                if (probData[userIndex]['eventtypes'][eventIndex] == 'mousemove') {
+                    probData[userIndex]['eventtypes'].splice(eventIndex, 1);
+                    probData[userIndex]['states'].splice(eventIndex, 1);
+                    probData[userIndex]['timestamp'].splice(eventIndex, 1);
+                    eventIndex--;
+                }
+            }
+
+            for (let eventIndex = 1; eventIndex < probData[userIndex]['eventtypes'].length; eventIndex++) {
+                if (probData[userIndex]['states'][eventIndex] == probData[userIndex]['states'][eventIndex - 1]) {
+                    probData[userIndex]['eventtypes'].splice(eventIndex, 1);
+                    probData[userIndex]['states'].splice(eventIndex, 1);
+                    probData[userIndex]['timestamp'].splice(eventIndex, 1);
+                    eventIndex--;
+                }
+            }
+
+            let eventLen = probData[userIndex]['eventtypes'].length
+            probData[userIndex]['eventtypes'].splice(eventLen / sliceRatio, eventLen * (sliceRatio - 1) / sliceRatio);
+            probData[userIndex]['states'].splice(eventLen / sliceRatio, eventLen * (sliceRatio - 1) / sliceRatio);
+            probData[userIndex]['timestamp'].splice(eventLen / sliceRatio, eventLen * (sliceRatio - 1) / sliceRatio);
+        }
+
+        let maxColNum = d3.max(clusterResult, function(data, i) {
+                return data['userid'].length
+            }) + 1,
+            maxRowNum = clusterResult.length
+        fullSVG.attr('width', maxColNum * 960 / dataconfig.scalesize).attr('height', maxRowNum * 600 / dataconfig.scalesize)
+        fullSVG.append("rect")
+            .attr('class', "_rect")
+            .attr('width', 960 / dataconfig.scalesize)
+            .attr('height', maxRowNum * 600 / dataconfig.scalesize)
+            .attr("fill", "lightgreen")
+            .attr('opacity', 0.4)
+        for (let i = 0; i < clusterResult.length; i++) {
+            let svgAll = fullSVG.append('g')
+                .attr('width', (960 / dataconfig.scalesize) * (clusterResult[i]['userid'].length + 1))
+                .attr('height', (600 / dataconfig.scalesize))
+                .attr('transform', 'translate(0,' + ((600 / dataconfig.scalesize) * i) + ")")
+            for (let j = 0; j < clusterResult[i]['userid'].length + 1; j++) {
+                if (j == 0) {
+                    var svgNode = svgAll.append('g')
+                        .attr('class', i + "_pattern")
+                        .attr('width', 960 / dataconfig.scalesize)
+                        .attr('height', 600 / dataconfig.scalesize)
+                        .attr('transform', 'translate(' + 960 / dataconfig.scalesize * j + ',0)')
+
+                    drawTraceOverview(svgNode, [clusterResult[i]['pattern']], validCenter, dataconfig, lowscale)
+
+                } else {
+                    svgNode = svgAll.append('g')
+                        .attr('class', i + "_" + (j - 1))
+                        .attr('width', 960 / dataconfig.scalesize)
+                        .attr('height', 600 / dataconfig.scalesize)
+                        .attr('transform', 'translate(' + 960 / dataconfig.scalesize * j + ',0)')
+
+                    for (let l = 0; l < probData.length; l++) {
+                        if (probData[l]['userid'] == clusterResult[i]['userid'][j - 1]) {
+                            if (Number(probData[l]['score'][0]) == 100) {
+                                svgAll.append('rect')
+                                    .attr('class', '.fullMark_mark')
+                                    .attr('width', 960 / dataconfig.scalesize)
+                                    .attr('height', 600 / dataconfig.scalesize - 2)
+                                    .attr('z-index', 100)
+                                    .attr('fill', 'none')
+                                    .attr('stroke', function() {
+                                        if (i % 2 == 0) {
+                                            return 'yellow'
+                                        } else {
+                                            return 'pink'
+                                        }
+                                    })
+                                    .attr('stroke-width', 4)
+                                    .attr('transform', 'translate(' + 960 / dataconfig.scalesize * j + ',0)')
+
+                            }
+                            drawTraceOverview(svgNode, [probData[l]], validCenter, dataconfig, lowscale)
+                        }
+                    }
+                }
+            }
+        }
+
+
+        function drawTraceOverview(svgNode, data, interestingPoints, dataconfig, lowscale) {
+            // mapList: Store everyone's computed transition information
+            let scalesize = dataconfig.scalesize
+            let disableZoom = dataconfig.disableZoom
+            if (lowscale) {
+                scalesize = 1
+                disableZoom = true
+            }
+            let cellRadius = dataconfig.cellRadius
+            let localWidth = 960 / scalesize
+            let localHeight = 600 / scalesize
+            let minR = 15 / scalesize
+            let maxR = 40 / scalesize
+            if (lowscale) {
+                maxR = dataconfig.maxRadius
+                minR = dataconfig.minRadius
+            }
+            let curRate = 30 / scalesize
+            let maxBandwidth = (maxR - 2) * 2
+            let outWidth = 4 / scalesize
+            let interestAreaListAll = []
+            let mapList = []
+            let timeSlice = 4
+            let eventTypeNum = 2
+            let color = ['#fdd0a2', '#fdae6b', '#f16913', '#d94801'];
+            // let color = ['#67a473', '#94bf9d', '#d1b9b3', '#b68f85'];
+            // inerestNum: The number of interest points
+            let interestNum = interestingPoints.length
+            let xScale = d3.scaleLinear().domain([0, 960]).range([0, localWidth])
+            let yScale = d3.scaleLinear().domain([0, 600]).range([0, localHeight])
+            svgNode.selectAll('*').remove()
+            svgNode.attr('width', localWidth)
+                .attr('height', localHeight)
+
+            let localg = svgNode.append('g');
+
+            if (lowscale) {
+                localg.append('image')
+                    .attr('class', '.headimage')
+                    .attr('xlink:href', this.getImgUrl('image/' + dataconfig.problemid + '.jpg'))
+                    .attr('width', localWidth)
+                    .attr('height', localHeight)
+                    .attr('z-index', -1)
+                    .attr('x', 0)
+                    .attr('y', 0)
+            }
+
+            function _generateMap(pointsOrder, sequenceLength, intstPointNum) {
+                let map = []
+                for (let i = 0; i < intstPointNum; i++) {
+                    let oneLine = []
+                    for (let j = 0; j < intstPointNum; j++) {
+                        let edge = {}
+                        edge['weight'] = 0
+                        edge['timeAll'] = []
+                        oneLine.push(edge)
+                    }
+                    map.push(oneLine)
+                }
+                let time = 0
+                for (let i = 0; i < sequenceLength - 1; i++) {
+                    let start = pointsOrder[i]
+                    let end = pointsOrder[i + 1]
+                    map[start][end].weight += 1 / sequenceLength
+                    map[start][end]['timeAll'].push(time)
+                    time++
+                }
+                // Get the most time period of each link
+                for (let start = 0; start < intstPointNum; start++) {
+                    for (let end = 0; end < intstPointNum; end++) {
+                        let temp = [0, 0, 0, 0]
+                        for (let order = 0; order < map[start][end]['timeAll'].length; order++) {
+                            temp[Math.floor(map[start][end]['timeAll'][order] / (sequenceLength / timeSlice))] += 1
+                            map[start][end]['timeAll'][order] = Math.floor(map[start][end]['timeAll'][order] / (sequenceLength / timeSlice))
+                        }
+                        map[start][end]['time'] = _indexOfMax(temp)
+                    }
+                }
+                return map
+            }
+
+            function _indexOfMax(arr) {
+                if (arr.length === 0) {
+                    return -1
+                }
+                let max = arr[0]
+                let maxIndex = 0
+                for (let i = 1; i < arr.length; i++) {
+                    if (arr[i] >= max) {
+                        maxIndex = i
+                        max = arr[i]
+                    }
+                }
+                return maxIndex
+            }
+
+            function _curvPath(a, b, curv) {
+                let x1 = a.x * cellRadius
+                let x2 = b.x * cellRadius
+                let y1 = a.y * cellRadius
+                let y2 = b.y * cellRadius
+                let s = 'M' + x1 + ',' + y1 + ' '
+                let k2 = -(x2 - x1) / (y2 - y1)
+                let controlX
+                let controlY
+                let path = ''
+                if (k2 < 2 && k2 > -2) {
+                    controlX = (x2 + x1) / 2 + curv * curRate
+                    controlX = controlX < 0 ? -controlX : controlX
+                    controlY = k2 * (controlX - (x1 + x2) / 2) + (y1 + y2) / 2
+                    controlY = controlY < 0 ? -controlY : controlY
+                } else {
+                    controlY = (y2 + y1) / 2 + curv * curRate
+                    controlY = controlY < 0 ? -controlY : controlY
+                    controlX = (controlY - (y1 + y2) / 2) / k2 + (x1 + x2) / 2
+                    controlX = controlX < 0 ? -controlX : controlX
+                }
+                let q = 'Q' + controlX + ',' + controlY + ' '
+                let l = x2 + ',' + y2 + ' '
+                path = s + q + l
+                return path
+            }
+
+            function _curvDirectPath(a, b, curv, pathWidth) {
+                let x1 = a.x * cellRadius - Math.floor(pathWidth / 2),
+                    y1 = a.y * cellRadius;
+                let x2 = b.x * cellRadius,
+                    y2 = b.y * cellRadius;
+                let x3 = a.x * cellRadius + Math.floor(pathWidth / 2),
+                    y3 = a.y * cellRadius
+                let s = 'M' + x1 + ',' + y1 + ' '
+                let s2 = 'M' + x2 + ',' + y2 + ' '
+                let k2 = -(x2 - x1) / (y2 - y1)
+                let controlX
+                let controlY
+                let path = ''
+                if (k2 < 2 && k2 > -2) {
+                    controlX = (x2 + x1) / 2 + curv * curRate
+                    controlX = controlX < 0 ? -controlX : controlX
+                    controlY = k2 * (controlX - (x1 + x2) / 2) + (y1 + y2) / 2
+                    controlY = controlY < 0 ? -controlY : controlY
+                } else {
+                    controlY = (y2 + y1) / 2 + curv * curRate
+                    controlY = controlY < 0 ? -controlY : controlY
+                    controlX = (controlY - (y1 + y2) / 2) / k2 + (x1 + x2) / 2
+                    controlX = controlX < 0 ? -controlX : controlX
+                }
+                let q = 'Q' + controlX + ',' + controlY + ' '
+                let l = x2 + ',' + y2 + ' ',
+                    l2 = x3 + ',' + y3 + ' '
+                path = s + q + l + q + l2 + 'Z'
+                return path
+            }
+
+            function _zoomed() {
+                // Create new scale ojects based on event
+                let xScale = d3.scaleLinear().domain([0, window.outerWidth]).range([0, window.outerWidth])
+                let yScale = d3.scaleLinear().domain([0, window.outerHeight]).range([0, window.outerHeight])
+                let newxScale = d3.event.transform.rescaleX(xScale)
+                let newyScale = d3.event.transform.rescaleY(yScale);
+                // Update circle
+                localg.selectAll('.transition_line').attr('transform', d3.event.transform)
+                localg.selectAll('.arc').remove()
+                localg.selectAll('.arc1').remove()
+                localg.selectAll('#reset').remove();
+                // Draw Transition Map's interest points
+                for (let k = 0; k < interestNum; k++) {
+                    // Draw the time circle
+                    let path = d3.arc()
+                        .outerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z))
+                        .innerRadius(0)
+
+                    let pie = d3.pie()
+                        .value(d => d)
+                        .sort((a, b) => a)
+
+                    localg.selectAll('.main_view')
+                        .data(pie(interestAreaOverview[k]['timeRatio']))
+                        .enter()
+                        .append('path')
+                        .attr('class', 'arc')
+                        .attr('d', path)
+                        .attr('fill', function(d, i) {
+                            return color[i]
+                        })
+                        .attr('stroke', 'black')
+                        .attr('stroke-width', 0.1)
+                        .attr('transform', 'translate(' + newxScale(interestAreaOverview[k].x * cellRadius) + ',' + newyScale(interestAreaOverview[k].y * cellRadius) + ')')
+
+                    // Draw the event circle
+                    // let path1 = d3.arc()
+                    //     .outerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z) + 4)
+                    //     .innerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z))
+
+                    // let color1 = ['black', 'whitesmoke', 'gray']
+                    // localg.selectAll('.main_view')
+                    //     .data(pie(interestAreaOverview[k]['eventType']))
+                    //     .enter()
+                    //     .append('path')
+                    //     .attr('class', 'arc1')
+                    //     .attr('transform', 'translate(' + newxScale(interestAreaOverview[k].x * cellRadius) + ',' + newyScale(interestAreaOverview[k].y * cellRadius) + ')')
+                    //     .attr('d', path1)
+                    //     .attr('fill', function(d, i) {
+                    //         return color1[i]
+                    //     })
+                }
+            }
+
+            function _noname(eventType, pointsOrder, sequenceLength) {
+                let interestAreaList = []
+                for (let i = 0; i < interestNum; i++) {
+                    let interestArea = {}
+                    interestArea['x'] = xScale(Number(interestingPoints[i][0] * cellRadius))
+                    interestArea['y'] = yScale(Number(interestingPoints[i][1] * cellRadius))
+                    interestArea['z'] = 0
+                    interestArea['eventType'] = Array(eventTypeNum).fill(0)
+                    interestArea['timeRatio'] = Array(timeSlice).fill(0)
+                    interestAreaList.push(interestArea)
+                }
+
+                for (let i = 0; i < sequenceLength; i++) {
+                    interestAreaList[pointsOrder[i]].z += 1 / sequenceLength
+                }
+
+                // Calculate the time ratio of each interest point
+                for (let i = 0; i < sequenceLength; i++) {
+                    for (let j = 0; j < timeSlice; j++) {
+                        if (i >= Math.ceil(j * sequenceLength / timeSlice) && i <= Math.floor((j + 1) * sequenceLength / timeSlice)) {
+                            interestAreaList[pointsOrder[i]]['timeRatio'][j] += 1 / sequenceLength
+                        }
+                    }
+                }
+
+                if (eventType.length > 0) {
+                    for (let i = 0; i < sequenceLength; i++) {
+                        if (eventType[i] === 'mouseup') {
+                            interestAreaList[pointsOrder[i]]['eventType'][0] += 1 / sequenceLength
+                        }
+                        if (eventType[i] === 'mousedown') {
+                            interestAreaList[pointsOrder[i]]['eventType'][1] += 1 / sequenceLength
+                        }
+                        // if (eventType[i] === 'mousemove') {
+                        //     interestAreaList[pointsOrder[i]]['eventType'][2] += 1 / sequenceLength
+                        // }
+                    }
+                }
+                return interestAreaList
+            }
+            for (let k = 0; k < data.length; k++) {
+
+                if (data[k].hasOwnProperty('states')) {
+                    var eventType = data[k]['eventtypes'] // eventType: The event type order sequence
+                    var pointsOrder = data[k]['states'] // pointsOrder: The order sequence of interest points
+                    var sequenceLength = pointsOrder.length
+                } else {
+                    var eventType = []
+                    var pointsOrder = data[k]
+                    var sequenceLength = pointsOrder.length
+                }
+                interestAreaListAll.push(_noname(eventType, pointsOrder, sequenceLength))
+                    // Calculate the link information between points
+                mapList.push(_generateMap(pointsOrder, sequenceLength, interestNum))
+            }
+            // mapOverview: add all users' sequence information up
+            let mapOverview = Array(interestNum).fill().map(() => {
+                return Array(interestNum).fill().map(() => {
+                    return {
+                        weight: 0,
+                        time: -1,
+                        timeAll: []
+                    }
+                })
+            })
+            for (let k = 0; k < mapList.length; k++) {
+                mapOverview.map((d1, i) => {
+                    d1.map((d2, j) => {
+                        d2['weight'] += mapList[k][i][j]['weight']
+                        d2['timeAll'] = d2['timeAll'].concat(mapList[k][i][j]['timeAll'])
+                    })
+                })
+            }
+            // Initial the interestAreaOverview parameters
+            let interestAreaOverview = []
+            for (let i = 0; i < interestNum; i++) {
+                let interestArea = {}
+                interestArea['x'] = xScale(interestingPoints[i][0])
+                interestArea['y'] = yScale(interestingPoints[i][1])
+                interestArea['z'] = 0
+                interestArea['eventType'] = Array(eventTypeNum).fill(0)
+                interestArea['timeRatio'] = Array(timeSlice).fill(0)
+                interestAreaOverview.push(interestArea)
+            }
+            // Get the most time period of each link
+            for (let i = 0; i < interestNum; i++) {
+                for (let j = 0; j < interestNum; j++) {
+                    let temp = [0, 0, 0, 0]
+                    for (let order = 0; order < mapOverview[i][j]['timeAll'].length; order++) {
+                        if (mapOverview[i][j]['timeAll'][order] !== -1) {
+                            temp[mapOverview[i][j]['timeAll'][order]] += 1
+                        }
+                    }
+                    mapOverview[i][j]['time'] = _indexOfMax(temp)
+                }
+            }
+            // Calculate the action ratio on each interest point
+            for (let i = 0; i < interestAreaListAll.length; i++) {
+                for (let j = 0; j < interestNum; j++) {
+                    interestAreaOverview[j]['z'] += interestAreaListAll[i][j]['z']
+                    for (let k = 0; k < timeSlice; k++) {
+                        interestAreaOverview[j]['timeRatio'][k] += interestAreaListAll[i][j]['timeRatio'][k]
+                    }
+                    for (let v = 0; v < eventTypeNum; v++) {
+                        interestAreaOverview[j]['eventType'][v] += interestAreaListAll[i][j]['eventType'][v]
+                    }
+                }
+            }
+            // maxWeight: get the max link weight
+            let maxWeight = Math.max(...mapOverview.map((d, i) => {
+                return Math.max(...d.map((wt) => wt.weight))
+            }));
+            if (maxWeight == 0) {
+                maxWeight = 1;
+            }
+            // Limit the max size of interest points
+            let rScale = d3.scaleSqrt().domain(d3.extent(interestAreaOverview, d => d.z)).range([minR, maxR]);
+            // Limit the max width of transition line
+            let swScale = d3.scaleLinear().domain([0, maxWeight]).range([0, maxBandwidth]);
+            // Add zoom function in the view
+            // Append zoom area
+            if (!disableZoom) {
+                let zoom = d3.zoom().on('zoom', _zoomed)
+                localg.append('rect')
+                    .attr('class', 'zoom')
+                    .style('fill', 'white')
+                    .attr('opacity', 0.1)
+                    .attr('width', localWidth)
+                    .attr('height', localHeight)
+                    .call(zoom)
+
+                // localg.append('image')
+                //     .attr('class', 'zoom')
+                //     .call(zoom)
+                //     .attr('xlink:href', '../static/img/20x746187641c59c168.jpg')
+                //     .attr('width', localWidth)
+                //     .attr('height', localHeight)
+
+            }
+            let defs = localg.append("defs");
+            // Draw Transition Map's line
+            for (let i = 0; i < interestNum; i++) {
+                for (let j = 0; j < interestNum; j++) {
+                    // draw path
+                    if (i !== j) {
+                        if (swScale(mapOverview[i][j].weight) != 0) {
+                            let path = _curvPath(interestAreaOverview[i], interestAreaOverview[j], 5 * (1 - swScale(mapOverview[i][j].weight) / swScale(maxWeight)))
+                            let directpath = _curvDirectPath(interestAreaOverview[i], interestAreaOverview[j], 5 * (1 - swScale(mapOverview[i][j].weight) / swScale(maxWeight)), swScale(mapOverview[i][j].weight));
+                            // var linerGradient = 
+                            // defs.append("linearGradient")
+                            //     .attr("id", "linearColor" + String(i) + "_" + String(j))
+                            //     .attr("x1", "0%")
+                            //     .attr("y1", "0%")
+                            //     .attr("x2", "70%")
+                            //     .attr("y2", "0%");
+
+                            // let stop1 = defs.select("#linearColor" + String(i) + "_" + String(j)).append("stop")
+                            //     .attr("offset", "0%")
+                            //     .style("stop-color", color[mapOverview[i][j].time]);
+                            // let stop2 = defs.select("#linearColor" + String(i) + "_" + String(j)).append("stop")
+                            //     .attr("offset", "100%")
+                            //     .style("stop-color", '#ffffff');
+
+                            let whole_path = localg.append('path').attr('d', directpath)
+                                .attr('class', 'transition_line' + String(i) + "_" + String(j))
+                                .attr('fill', color[mapOverview[i][j].time])
+                                .attr('stroke', color[mapOverview[i][j].time])
+                                .attr('stroke-width', 0.5)
+                                .attr('opacity', 0.5)
+
+
+                            // localg.append('path').attr('d', path)
+                            //     .attr('class', 'direct_transition_line' + String(i) + "_" + String(j))
+                            //     .attr('fill', 'none')
+                            //     // .attr('stroke', color[mapOverview[i][j].time])
+                            //     .attr('stroke', "url(#linearColor" + String(i) + "_" + String(j) + ")")
+                            //     .attr('stroke-width', swScale(mapOverview[i][j].weight))
+                            //     .attr('opacity', 0.5)
+                        }
+                    }
+                }
+            }
+            // Draw Transition Map's interest points
+            for (let k = 0; k < interestNum; k++) {
+                // Draw the time circle
+                let path = d3.arc()
+                    .outerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z))
+                    .innerRadius(0)
+
+                let pie = d3.pie()
+                    .value(d => d)
+                    .sort((a, b) => a)
+
+                localg.selectAll('.main_view')
+                    .data(pie(interestAreaOverview[k]['timeRatio']))
+                    .enter()
+                    .append('path')
+                    .attr('class', 'arc')
+                    .attr('d', path)
+                    .attr('fill', (d, i) => color[i])
+                    .attr('stroke', 'black')
+                    .attr('stroke-width', 0.1)
+                    .attr('transform', 'translate(' + (interestAreaOverview[k].x * cellRadius) + ',' + (interestAreaOverview[k].y * cellRadius) + ')')
+
+                // Draw the event circle
+                let path1 = d3.arc()
+                    .outerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z) + outWidth)
+                    .innerRadius(interestAreaOverview[k].z === 0 ? 0 : rScale(interestAreaOverview[k].z))
+
+                // let color1 = ['black', 'whitesmoke', 'gray']
+                // localg.selectAll('.main_view')
+                //     .data(pie(interestAreaOverview[k]['eventType']))
+                //     .enter()
+                //     .append('path')
+                //     .attr('class', 'arc1')
+                //     .attr('transform', 'translate(' + (interestAreaOverview[k].x * cellRadius) + ',' + (interestAreaOverview[k].y * cellRadius) + ')')
+                //     .attr('d', path1)
+                //     .attr('fill', (d, i) => color1[i])
+            }
+        }
+
     }
 }
 const DrawService = new Service()

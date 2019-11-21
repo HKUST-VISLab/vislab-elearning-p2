@@ -62,6 +62,21 @@ class Service {
         xhr.open('get', 'http://127.0.0.1:5000/usersequencebyproblem?pid=' + config.problemid + '&userid=' + config.userid, true)
         xhr.send()
     }
+    getClusterResultByProblem(callback, config) {
+        let that = this
+        var xhr = new XMLHttpRequest()
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === 4) {
+                var x = xhr.responseText.replace(/'/g, '"')
+                var data = JSON.parse(x)
+                if (callback) {
+                    that[callback]([data.data, data.fullSeq])
+                }
+            }
+        }
+        xhr.open('get', 'http://127.0.0.1:5000/clusterresultbyproblem?pid=' + config.problemid + '&userid=' + config.userid, true)
+        xhr.send()
+    }
     getproblemdetails(callback, config) {
         var xhr = new XMLHttpRequest()
         xhr.onreadystatechange = function() {

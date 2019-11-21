@@ -24,6 +24,13 @@ def _getUserSequenceByProblem(problemid):
     else:
         return dev_processor._getUserSequenceByProblem(problemid)
 
+def _clusterResultByProblem(problemid):
+    if Path("./cache/" + problemid + "/" + problemid + "_cluster").exists():
+        with open("./cache/" + problemid + '/' + problemid + '_cluster', "r") as f:
+            return f.readline()
+    else:
+        return dev_processor._clusterResultByProblem(problemid)
+
 def _getProblemInfomation(problemid, num):
     if Path("./cache/" + problemid+"/problemdetails").exists():
         with open("./cache/" + problemid+"/problemdetails", "r") as f:

@@ -39,6 +39,10 @@ export default {
     minRadius: {
       type: Number,
       required: true
+    },
+    cellRadius: {
+      type: Number,
+      required: true
     }
   },
   watch: {
@@ -52,6 +56,10 @@ export default {
         this.config.minRadius = this.minRadius
         Object.getPrototypeOf(DataService).getUserSequenceByProblem.call(this, "renderTransition", this.config)
     },
+    cellRadius(newValue, oldValue) {
+      this.cellRadius = newValue
+      this.config.cellRadius = this.cellRadius
+    }
   },
   components: {
 

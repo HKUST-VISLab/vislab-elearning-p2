@@ -1,5 +1,8 @@
 <template>
   <div class="appcontent">
+    <div class="slotPart">
+        <ModalSlot :slotShow="slotShow" @hideModal="hideModal" style="position: absolute" />
+    </div>
     <div class="leftPart">
       <div class="overviewtitle">Overview</div>
       <div class="overviewcontainer">
@@ -8,8 +11,8 @@
         <Transitionview :cellRadius="cellRadius" :problemid="problemid" :maxRadius="maxRadius" :minRadius="minRadius"/>
       </div>
       <div class="transitiontitle">Transition Map</div>
-      <div class="transitioncontainer">
-        <BottomView/>
+      <div class="transitioncontainer" >
+        <BottomView @showSlot="showSlot"/>
       </div>
     </div>
     <div class="rightPart">
@@ -68,6 +71,7 @@ import HeatMapview from './HeatMap'
 import Transitionview from './Transition'
 import BottomView from './BottomView'
 import DataAnalyticsView from './DataAnalytics'
+import ModalSlot from './Clusterslot'
 import { eventBus } from "../eventBus.js"
 
 export default {
@@ -78,6 +82,7 @@ export default {
     Transitionview,
     BottomView,
     DataAnalyticsView,
+    ModalSlot,
   },
   data () {
     return {
@@ -93,7 +98,8 @@ export default {
       maxRadius: 30,
       minRadius: 10,
       mode: "false",
-      problemid: "20x746187641c59c168"
+      problemid: "20x746187641c59c168",
+      slotShow: false,
     }
   },
   mounted () {
@@ -108,6 +114,8 @@ export default {
         this.lowerThresh = parseInt(cfg.config.lowerThresh * 1000)
       }
       eventBus.$emit("changeProb", [this.problemid, this.cellRadius, this.cellCoef, this.upperThresh, this.lowerThresh])
+      this.viewvalue = "roiview"
+      eventBus.$emit("view_change", this.viewvalue)
       this.valueChange()
     },
     changeProblem (e) {
@@ -131,6 +139,13 @@ export default {
     viewChange () {
       eventBus.$emit("view_change", this.viewvalue)
       this.valueChange()
+    },
+    hideModal() {
+        // 取消弹窗回调
+        this.slotShow = false
+    },
+    showSlot() {
+        this.slotShow = true
     }
   }
 }
@@ -329,4 +344,5 @@ export default {
     border: 4px solid rgba(186, 146, 146) !important;
     height: 480px;
 }
+
 </style>

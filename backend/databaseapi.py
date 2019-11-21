@@ -26,15 +26,16 @@ def userSequenceByProblem(problemid):
                     "_id":"$userid",
                     "data":{
                         "$push":{
-                            "timestamp":"$dt_timestamp",
-                            "pageX":"$pageX",
-                            "pageY":"$pageY",
+                            "time":"$dt_timestamp",
+                            "time2": "$timeStamp",
+                            "x":"$pageX",
+                            "y":"$pageY",
                             "type":"$type"
                         }
                     },
                 }
             },
-            { "$sort": { "data.timestamp": -1 } },
+            { "$sort": { "data.time": -1, "data.time2": -1 } },
             ]))
     return cursor
 

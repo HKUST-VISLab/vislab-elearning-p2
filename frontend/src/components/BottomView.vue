@@ -1,9 +1,7 @@
 <template>
   <div style="overflow-y:hidden;" v-show="showbottomview">
+    <div class='content' id = 'slotButton' style = "height: 100% ; width: 35px; position: absolute"></div>
       <div class = "content" id = "bottomview_div" style = "height: 100% ; width: 960px;"></div>
-      <!-- <svg id="bottomview_svg"> -->
-        <!-- <BottomView v-for="item in clusterList" v-bind:key="item" /> -->
-      <!-- </svg> -->
   </div>
 </template>
 
@@ -16,12 +14,10 @@ import { eventBus } from "../eventBus.js"
 export default {
   name: 'BottomView',
   components: {
-    // Transitionview
   },
   data () {
     return {
       svgid:"",
-      clusterList:[1, 2, 3],
       showbottomview: false,
       low: 10,
       high: 500,  
@@ -34,6 +30,18 @@ export default {
         cellRadius: 4,
         imagePath: 'image/20x746187641c59c168.jpg'
       },
+    }
+  },
+  props: {
+    cellRadius: {
+      type: Number,
+      required: true
+    }
+  },
+  watch: {
+    cellRadius(newValue, oldValue) {
+      this.cellRadius = newValue
+      this.config.cellRadius = this.cellRadius
     }
   },
   components: {
@@ -61,42 +69,62 @@ export default {
   methods: {
     renderBottoms (data) {
       let orderNum = 0;
-      // test variable
-      let secondOrderNum = 0;
-      let slicePartition = 5;
-      // -------------
+      let secondOrderNum = 0; // Count the number in the second row
+      let slicePartition = 1; // Set for the trace slice
       let textSize = 18;
       let mapGap = 320;
       let textGap = 205;
       let validCount = 0;
+      let buttonWidth = 35;
 
       for (let i = 0; i < data.length; i++) {
         if (data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1] == '100') {
           validCount ++;
         }
       }
+      d3.select('#slotButton').selectAll('*').remove()
+      // Button for cluster slot
+      let slotButtonSVG = d3.select('#slotButton').append('svg').attr('width', buttonWidth).attr('height', 290)
+      let slotButton = slotButtonSVG.append('rect')
+        .attr('id', 'slotButton')
+        .attr('transform', 'translate(2,2)')
+        .attr('width', buttonWidth - 5)
+        .attr('height', 275)  
+        .attr('stroke', '#f2eee5')
+        .attr('stroke-width', 3)
+        .attr('position', 'absolute')  
+        .attr('fill', '#efcfb6')
+      let slotText = slotButtonSVG.append('text')
+        .text('Cluster Result')
+        .attr('font', 'black')
+        .attr('font-size', 16)
+        .attr('transform', 'translate(20, 145), rotate(-90)')
+        .attr('text-anchor', 'middle')
+      // Interaction on Button
+      slotButton.on('click', this.showSlot)
+      slotText.on('click', this.showSlot)
 
       d3.select('#bottomview_div').selectAll('*').remove()
       let mainSVG = d3.select('#bottomview_div')
             .append('svg')
             .attr("id", "bottomview_svg")
             .attr('width', validCount * mapGap)
-            .attr('height', 150 + 140);
-      console.log(data)
+            .attr('height', 290);
+
+      // Begin draw content
       for (let i = 0; i < data.length; i++) {
         if (data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1] == '100') {
           let currentScore = parseInt(data[i]['score'][data[i]['score'].length - 1])
           // Keep score's type as Number and keep the latest score
           data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
-          // test for trace slicing
-          let currentActNum = parseInt(data[i]['states'].length/3)
-          // ----------------------
-          let currentUserid = data[i]['userid'].slice(11);
+          let currentActNum = parseInt(data[i]['states'].length/slicePartition)
+          let currentUserid = data[i]['userid'];
             
           let localsvg = mainSVG.append('g')
             .attr("id", "user" + i)
             .attr("transform", "translate(" + mapGap * orderNum + ", 0)")
 
+          // Text for each map
           d3.select('#bottomview_svg').append('text')
             .attr("x", textGap + mapGap * orderNum)
             .attr("y", 60)
@@ -120,7 +148,6 @@ export default {
             .attr("stroke", "grey")
             .attr("stroke-width", "2px")
             .attr('opacity', 0.5);
-          // test for trace slicing
           d3.select('#bottomview_svg').append('text')
             .attr("x", textGap + mapGap * orderNum)
             .attr("y", 100)
@@ -128,14 +155,14 @@ export default {
             .attr("class", "textselected")
             .style("text-anchor", "start")
             .style("font-size", textSize)
-          // ----------------------
 
           let range = this.paceFilter(this.low, this.high, data)
 
-          // For test on change the length of trace
+          // Slice the length of trace
           data[i]['states'].splice(data[i]['states'].length/slicePartition, data[i]['states'].length)
           data[i]['eventtypes'].splice(data[i]['eventtypes'].length/slicePartition, data[i]['eventtypes'].length)
-          //----------------------------------------
+          
+          // The first row for the maps with full score ---------------------------------------------------------
           if (this.config.svgid_set.length == 0){
             Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
           }else{
@@ -144,13 +171,13 @@ export default {
           orderNum = orderNum + 1
         }
 
-        // For test on change the length of trace---------------------------------------------------------
+        // The second row for the maps with non-full score ---------------------------------------------------------
         if (parseInt(data[i]['score'].length > 0 && data[i]['score'][data[i]['score'].length - 1]) < 100) {
           let currentScore = parseInt(data[i]['score'][data[i]['score'].length - 1])
           // Keep score's type as Number and keep the latest score
           data[i]['score'][0] = parseInt(data[i]['score'][data[i]['score'].length - 1])
-          let currentUserid = data[i]['userid'].slice(11);
-          let currentActNum = parseInt(data[i]['states'].length/3);
+          let currentUserid = data[i]['userid'];
+          let currentActNum = parseInt(data[i]['states'].length/slicePartition);
             
           let localsvg = mainSVG.append('g')
             .attr("id", "user" + i)
@@ -198,7 +225,6 @@ export default {
             Object.getPrototypeOf(DrawService).drawTraceOverview(localsvg, range, [data[i]], DataService.content.validSetCenter, this.config, false)
           }
           secondOrderNum = secondOrderNum + 1
-        //-------------------------------------------------------------------------------------------------
         }
       }
     },
@@ -218,6 +244,9 @@ export default {
         }
       }
       return range
+    },
+    showSlot () {
+      this.$emit('showSlot')
     }
   }
 }

@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 question = {"questionData":{
 "1":{"id":1,"code":"ICM0900002","difficulty":"2","grade":6,"hashCode":"\/storage\/mad\/questions\/1x8e8f4a413774a1d6"},
 "2":{"id":2,"code":"ICM0900004","difficulty":"2","grade":5,"hashCode":"\/storage\/mad\/questions\/2xbee2fdb4aec4e218"},
@@ -3585,6 +3586,38 @@ questionType = {
     "geometric":["67x5b4fba667df52fa1","128x811b2570178bf7f4","203x3bc460c3ede7581a","271x2ea9048dc27a6b5a","282x976393d02d97f2ca","316x2b8e2aa4fcb07f1c","319x24764c5cc505303d","322x39f84db1bdf774a8","338xf383715c2a1999ed","340x052bf862122869f0","346xa92366a1fa77fb7f","358x441cafcc520806f7","387x218180f59bd5cfda","399xf074fd7f8ffcd366","400xc74562d9ea0382f3","406xe0ee871f1fe41772","409x68e615c0d19365af","415x91646891f20a2329","416x02cddacf8b76a66a","460x35196a53450aefd7","463xcfe7b496cc84ebb6","468x6ee27e8a77b24d42","470xe90407cd4b65729d","473x2459d225578a2c37","480x074b7a5f6f0660a0","489x42352d7e41d42265","492xa8d62ce400033970","499x69928dbe0e19583f","511x10f0057627e79684","1380x6a7d4ac8a9c7bc16","2215xb218e7d30d44d7f7","2216xec49885fc36eed79","2234xfdffacb0b8925af4","2235xea137be8521b4e86","2236xb4438338f18fd81d","2237x2f3ed640c002584d","2239x41531bdecd3f485c","2242xaede2deed7832980","2254x169974ff8cee895a","2261x9205c7d9b334322d","2268xcdfc5027971ab386","2269x0410dd741debabd2","2694x8168e598b648d4fc","2724xf65ee49b8a20e811","2726x6a315b534378f1f2","2750xf06a70e229b22315","2758x663ddb984a6654cf","2837x6f95d44ac77071c5","2847x14dca8054c74222c","2918x070f68e2b1b77c99","2928xe028e62eb0da3a99","2940x500c4ec0742495bf","2943x144f491ced024747","2953x98dbcd9b1fff019d","2954xbf6ba0007614eb28","2967x7f0f4189294f20b5","2978xf52fd3cbb1c73d78","3011xe1957a2f6a90b703","3108x8542053b813837fa","3113x55a393ac7444abb3","3121x2a469f59d1beb0fd","3125xdc7240e6bbac240a","3130x4cfc4a790920272c","3236xa4e1c8fbd5370f80","3237x7def0eb8ad46f175","3238x4f1c912cc3670b47","3256x8cb4ff37ec4c05a5","3257x2ceb518730a8d7f5","3258x7b1d5d7a3c8e48df","3274x17dc0ea4a385648c","3278xec934e87e95ecac7","3280x31422cc56e4cf96f","3289xe34cfad14af148a7","3290x60851918193e504f","3291x4e69934e9a450f44","3294x108cbb41acddc434","3295x6d53f37c9e7f55fc","3296x9ea02cdc40fbae79","3297x1340d6645024359c","3298x8415ccbbdb19d329","3299x50cb55cd2eb5131b","3308x39cd5fd3164a99a6","3309x9b01a37b35bc32ec","3310x58ffbd88d0201814","3311x73cb964adc8be7c7","3316x089f20bc40de1ab0","3319x70289b47324f1276","3320x706c56842c93729d","3321xe28bad6743371306","3328xece32641752eb036","3331xde2f4ef708d49596","3332xfbbe2cb982db7c99","3333xbe2b90abda67f262","3334x01b7616674b81f2e","3348xe4309f07c708b217","3358x0874c90fcd0ec2b9","3364x32fc89eed26fec48","3366x6277e8d643ed747d","3367x5acd49b8eee72c8e","3368x405cd92ea40f8df2","3372x490097c76cac33d3","3375x5fabd7dc8e8ed390","3377xd74a547591fa16bf","3382x115ab67c4579dd45","3384xb975398ba31383ea","3386xeb28732acec3e57c","3389x84868dbcb468861b","3411xa6f1914ee7f02bb5","3412x7a7d7edabf6dc923","3415xcef072ef23ab7b64","3416xde9cb574518258fa","3419xc58d1beb281ebaa0","3420xe4d92775e9c6dfdc","3421x40f1e43782cbfa4e","3422x80e2ea3f82461b78","3425x43f83a5974e705b3","3436x11128fcfa0d1d686","3438xbc2876d6d1651409","3440x0ec7411cd057fb15","3442xa09c6c5358ec17f4","3443xccc6d51438b60e48","3451x22545de1aee7ac7b","3456xce74d9e75d050919","3457x778a3a7bfd756ed4","3458xa141820dce2b539e","3461x61ad3af75f3f80b0","3482x4f0b580affa118c6","3493xd3af094c35a16a85","3501x8f5eb03fe1606d99","3507xd88c61d84be2f77b","3509x8218570d6ca5de03","3520xbea53103c41e925f","3527x4f6ae5e8d419f50c","3531xbdde8ea415e6714b","3533xd2edee7b4beb8249","3590xef1fa328605016bb","3591xf6c43d2e83f5c56b","3589x3211f371c00b0418"]
 }
 
+def _totimestamp(dtstr, epoch=datetime(1970,1,1), timemode=1):
+        '''mode1 --  2019-03-31 16:38:37'''
+        '''mode2 --  4/24/19 9:45'''
+        if timemode == 1:
+            dt = datetime.strptime(dtstr.replace("\n","").strip(), '%Y-%m-%d %H:%M:%S')
+            td = dt - epoch
+            return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6 - 28800
+        else:
+            dt = datetime.strptime(dtstr.replace("\n","").strip(), '%m-%d-%Y %H:%M')
+            td = dt - epoch
+            return (td.microseconds + (td.seconds + td.days * 86400) * 10**6) / 10**6 - 28800
+
+def readrecentrecords():
+        records = {}
+        with open("datafile/records2.csv", "r") as f:
+        # record_id,student_id,question_id,status(0 not final: 1 finalized question_records),score,created_at (in UTC)
+        # 786154,5334,2860,1,0,2019-03-31 16:38:37
+            tmp = f.readlines()
+            for item in tmp:
+                arr = item.split(",")
+                arr[5] = _totimestamp(arr[5]) + 0.1
+                if arr[2] in question:
+                    arr[2] = question[arr[2]]
+                else:
+                    continue
+                k = str(arr[1]) + "_" + arr[2][0]
+                if k in records:
+                    continue
+                else:
+                    records[k] = [arr[1], arr[2], arr[3], arr[4], arr[5]]
+        return records
+
 def readquestion():
     questionIndex = {}
     for i in question["questionData"]:
@@ -3646,3 +3679,4 @@ def readProblemOverNum(num):
 
 question = readquestion()
 scoretable = readScore()
+recentScore = readrecentrecords()

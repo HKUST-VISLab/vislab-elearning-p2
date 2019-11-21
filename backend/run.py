@@ -11,7 +11,7 @@ import pro_processor
 app = Flask(__name__, static_url_path='')
 app._static_folder = "static"
 CORS(app)
-DEV_MODE = False
+DEV_MODE = True
 
 @app.route('/')
 def index():
@@ -53,6 +53,14 @@ def getUserSequenceByProblem():
         return dev_processor._getUserSequenceByProblem(problemid)
     else:
         return pro_processor._getUserSequenceByProblem(problemid)
+
+@app.route('/clusterresultbyproblem',methods=['GET'])
+def clusterResultByProblem():
+    problemid = request.args["pid"]
+    if DEV_MODE:
+        return dev_processor._clusterResultByProblem(problemid)
+    else:
+        return pro_processor._clusterResultByProblem(problemid)
 
 @app.route('/userclustersbyproblem',methods=['GET'])
 def getUserClustersByProblem():

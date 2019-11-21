@@ -55,32 +55,6 @@ export default {
     }
   },
   watch: {
-    // cellRadius(newValue, oldValue) {
-    //     this.cellRadius = newValue
-    //     this.config.cellRadius = this.cellRadius
-    //     Object.getPrototypeOf(DataService).getSequence.call(this, 'renderSVG', this.config)
-    // },
-    // cellCoef(newValue, oldValue) {
-    //     this.cellCoef = newValue
-    //     this.config.cellCoef = this.cellCoef
-    //     Object.getPrototypeOf(DataService).getSequence.call(this, 'renderSVG', this.config)
-    // },
-    // upperThresh(newValue, oldValue) {
-    //     this.upperThresh = newValue
-    //     this.config.upperThresh = this.upperThresh/1000.0
-    //     Object.getPrototypeOf(DataService).getSequence.call(this, 'renderSVG', this.config)
-    // },
-    // lowerThresh(newValue, oldValue) {
-    //     this.lowerThresh = newValue
-    //     this.config.lowerThresh = this.lowerThresh/1000.0
-    //     Object.getPrototypeOf(DataService).getSequence.call(this, 'renderSVG', this.config)
-    // },
-    // problemid(newValue, oldValue) {
-    //     this.problemid = newValue
-    //     this.config.problemid = this.problemid
-    //     this.config.imagePath = 'image/' + this.problemid + '.jpg'
-    //     Object.getPrototypeOf(DataService).getSequence.call(this, 'renderSVG', this.config)
-    // },
   },
   components: {
   },
